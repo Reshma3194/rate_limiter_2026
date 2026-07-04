@@ -1,5 +1,13 @@
 # Rate Limiter — Two Theta Take-Home
 
+![Python](https://img.shields.io/badge/python-3.11%2B-blue?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?logo=fastapi&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-5%20passing-brightgreen)
+![Algorithm](https://img.shields.io/badge/algorithm-token%20bucket-orange)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
+
+🚀 **Live demo:** [rate-limiter-2026.onrender.com/demo](https://rate-limiter-2026.onrender.com/demo)
+
 A per-client rate limiter built with the **Token Bucket** algorithm, exposed via a FastAPI HTTP endpoint.
 
 ## Algorithm: Token Bucket — why?
@@ -94,31 +102,31 @@ Config: 5 requests / 10 seconds, per client "alice".
 
 ## Running locally
 
-\`\`\`bash
+```bash
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
-\`\`\`
+```
 
 Then:
-\`\`\`bash
+```bash
 curl "http://localhost:8000/request?client_id=alice"
-\`\`\`
+```
 
 Fire 6 requests quickly to see the 6th get blocked (429):
-\`\`\`bash
+```bash
 for i in 1 2 3 4 5 6; do curl -i "http://localhost:8000/request?client_id=alice"; echo; done
-\`\`\`
+```
 
 Configure the limit via env vars:
-\`\`\`bash
+```bash
 RATE_LIMIT_CAPACITY=10 RATE_LIMIT_PERIOD=60 uvicorn app.main:app --port 8000
-\`\`\`
+```
 
 ## Running tests
 
-\`\`\`bash
+```bash
 pytest tests/ -v
-\`\`\`
+```
 
 All 5 tests pass:
 - `test_allowed_under_limit`
