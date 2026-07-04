@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Token Bucket — Live Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1A1714;
+    --panel: #241F1A;
+    --panel-border: #342E27;
+    --gold: #E8A94A;
+    --gold-dim: #8A6B3A;
+    --green: #6FA97A;
+    --red: #D9694F;
+    --text: #EDE6DA;
+    --text-dim: #A89C8A;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  header {
+    margin-bottom: 40px;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 40px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .sub {
+    color: var(--text-dim);
+    font-size: 15px;
+    max-width: 560px;
+    line-height: 1.5;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+    margin-top: 40px;
+  }
+  @media (max-width: 720px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .bucket-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .bucket-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+  }
+  .token-count {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1;
+    margin-top: 16px;
+  }
+  .token-count span {
+    font-size: 22px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .status-badge {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+  .status-ready { background: rgba(111,169,122,0.15); color: var(--green); }
+  .status-empty { background: rgba(217,105,79,0.15); color: var(--red); }
+
+  form {
+    display: flex;
+    gap: 10px;
+    margin-top: 28px;
+    width: 100%;
+  }
+  input[type=text] {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    padding: 11px 14px;
+    border-radius: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    outline: none;
+  }
+  input[type=text]:focus { border-color: var(--gold-dim); }
+  button {
+    background: var(--gold);
+    color: #241705;
+    border: none;
+    padding: 11px 20px;
+    border-radius: 9px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.15s ease;
+  }
+  button:hover { background: #f0b862; }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .burst-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .burst-row button {
+    background: transparent;
+    border: 1px solid var(--panel-border);
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 14px;
+  }
+  .burst-row button:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+  .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .log-header h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    margin: 0;
+  }
+  .log-header .rate-def {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .log {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .log-entry {
+    display: grid;
+    grid-template-columns: 70px 1fr auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    animation: slideIn 0.25s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .log-entry .client { color: var(--text-dim); }
+  .log-entry .verdict { font-weight: 600; }
+  .verdict.allowed { color: var(--green); }
+  .verdict.blocked { color: var(--red); }
+  .log-entry .meta { color: var(--text-dim); font-size: 12px; text-align: right; }
+  .empty-log {
+    color: var(--text-dim);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    padding: 40px 0;
+  }
+
+  /* Bucket SVG coin animation */
+  .coin {
+    transition: cy 0.35s cubic-bezier(.4,0,.2,1), opacity 0.3s ease;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Two Theta &middot; Rate Limiter</div>
+    <h1>Token Bucket, live.</h1>
+    <p class="sub">Every client keeps a bucket of tokens. Each request spends one. Empty the bucket, and requests wait until it refills — continuously, not all at once.</p>
+  </header>
+
+  <div class="grid">
+    <div class="panel bucket-panel">
+      <div class="bucket-label" id="clientLabel">CLIENT: alice</div>
+      <svg id="bucketSvg" width="160" height="180" viewBox="0 0 160 180">
+        <!-- bucket outline -->
+        <path d="M 25 40 L 40 165 Q 40 172 47 172 L 113 172 Q 120 172 120 165 L 135 40"
+              fill="none" stroke="#8A6B3A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <ellipse cx="80" cy="40" rx="55" ry="10" fill="none" stroke="#8A6B3A" stroke-width="4"/>
+        <clipPath id="bucketClip">
+          <path d="M 27 42 L 41 168 Q 41 170 47 170 L 113 170 Q 119 170 119 168 L 133 42 Z"/>
+        </clipPath>
+        <g id="coinGroup" clip-path="url(#bucketClip)"></g>
+      </svg>
+      <div class="token-count"><span id="tokenVal">5</span><span>/5</span></div>
+      <div id="statusBadge" class="status-badge status-ready">READY</div>
+
+      <form id="requestForm">
+        <input type="text" id="clientInput" value="alice" placeholder="client_id" autocomplete="off">
+        <button type="submit">Send</button>
+      </form>
+      <div class="burst-row">
+        <button type="button" id="burstBtn">Fire burst of 8</button>
+        <button type="button" id="resetBtn">Reset view</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="log-header">
+        <h2>Request log</h2>
+        <div class="rate-def" id="rateDef">loading limit…</div>
+      </div>
+      <div class="log" id="log">
+        <div class="empty-log">No requests yet — send one to see it land here.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = window.location.origin;
+let capacity = 5;
+
+const tokenVal = document.getElementById('tokenVal');
+const statusBadge = document.getElementById('statusBadge');
+const clientLabel = document.getElementById('clientLabel');
+const clientInput = document.getElementById('clientInput');
+const logEl = document.getElementById('log');
+const coinGroup = document.getElementById('coinGroup');
+const rateDef = document.getElementById('rateDef');
+
+function renderCoins(remaining) {
+  coinGroup.innerHTML = '';
+  const total = capacity;
+  const rowWidth = 4;
+  for (let i = 0; i < total; i++) {
+    const filled = i < remaining;
+    const col = i % rowWidth;
+    const row = Math.floor(i / rowWidth);
+    const cx = 52 + col * 20;
+    const cyTarget = 158 - row * 20;
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('class', 'coin');
+    circle.setAttribute('cx', cx);
+    circle.setAttribute('cy', filled ? cyTarget : 190);
+    circle.setAttribute('r', 8);
+    circle.setAttribute('fill', filled ? '#E8A94A' : 'transparent');
+    circle.setAttribute('opacity', filled ? '1' : '0');
+    coinGroup.appendChild(circle);
+  }
+}
+
+function updateBucketUI(remaining, limit) {
+  capacity = limit;
+  tokenVal.textContent = remaining;
+  tokenVal.nextSibling ? null : null;
+  document.querySelector('.token-count span:last-child').textContent = '/' + limit;
+  renderCoins(remaining);
+  if (remaining > 0) {
+    statusBadge.textContent = 'READY';
+    statusBadge.className = 'status-badge status-ready';
+  } else {
+    statusBadge.textContent = 'EMPTY';
+    statusBadge.className = 'status-badge status-empty';
+  }
+}
+
+function addLogEntry(clientId, data, statusCode) {
+  const empty = logEl.querySelector('.empty-log');
+  if (empty) empty.remove();
+
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  const time = new Date().toLocaleTimeString();
+  const verdictText = data.allowed ? 'ALLOWED' : 'BLOCKED';
+  const verdictClass = data.allowed ? 'allowed' : 'blocked';
+  const metaText = data.allowed
+    ? `${data.remaining} left`
+    : `retry ${data.retry_after}s`;
+
+  entry.innerHTML = `
+    <span class="client">${time}</span>
+    <span>${clientId}</span>
+    <span class="verdict ${verdictClass}">${verdictText}</span>
+    <span class="meta">${metaText}</span>
+  `;
+  logEl.appendChild(entry);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+async function sendRequest(clientId) {
+  try {
+    const res = await fetch(`${API_BASE}/request?client_id=${encodeURIComponent(clientId)}`);
+    const data = await res.json();
+    updateBucketUI(data.remaining, data.limit);
+    addLogEntry(clientId, data, res.status);
+    rateDef.textContent = `limit: ${data.limit} req / ${data.period_seconds}s`;
+  } catch (err) {
+    addLogEntry(clientId, { allowed: false, remaining: 0, retry_after: '—' }, 0);
+  }
+}
+
+document.getElementById('requestForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const clientId = clientInput.value.trim() || 'alice';
+  clientLabel.textContent = 'CLIENT: ' + clientId;
+  sendRequest(clientId);
+});
+
+document.getElementById('burstBtn').addEventListener('click', async () => {
+  const clientId = clientInput.value.trim() || 'alice';
+  clientLabel.textContent = 'CLIENT: ' + clientId;
+  for (let i = 0; i < 8; i++) {
+    await sendRequest(clientId);
+    await new Promise(r => setTimeout(r, 180));
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', async () => {
+  const clientId = clientInput.value.trim() || 'alice';
+  try {
+    await fetch(`${API_BASE}/reset/${encodeURIComponent(clientId)}`, { method: 'DELETE' });
+  } catch (err) {}
+  logEl.innerHTML = '<div class="empty-log">No requests yet — send one to see it land here.</div>';
+  updateBucketUI(capacity, capacity);
+});
+
+// initial paint
+renderCoins(capacity);
+</script>
+</body>
+</html> 
