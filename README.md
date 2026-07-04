@@ -1,12 +1,10 @@
 # Rate Limiter — Two Theta Take-Home
 
-![Python](https://img.shields.io/badge/python-3.11%2B-blue?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-005571?logo=fastapi&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-5%20passing-brightgreen)
-![Algorithm](https://img.shields.io/badge/algorithm-token%20bucket-orange)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue?logo=python&logoColor=white) &nbsp; ![FastAPI](https://img.shields.io/badge/FastAPI-005571?logo=fastapi&logoColor=white) &nbsp; ![Tests](https://img.shields.io/badge/tests-5%20passing-brightgreen) &nbsp; ![Algorithm](https://img.shields.io/badge/algorithm-token%20bucket-orange) &nbsp; ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 🚀 **Live demo:** [rate-limiter-2026.onrender.com/demo](https://rate-limiter-2026.onrender.com/demo)
+
+![Token Bucket Demo](demo-screenshot.png)
 
 A per-client rate limiter built with the **Token Bucket** algorithm, exposed via a FastAPI HTTP endpoint.
 
